@@ -4,30 +4,25 @@ using UnityEngine;
 
 namespace FirstGameProg2Game
 {
-    public class EnemyController : MonoBehaviour
+    public class Entity : MonoBehaviour
     {
-        [Header("References")]
-        [SerializeField] private protected Transform bulletSpawnTransform;
-        [SerializeField] private protected BulletScript bulletPrefab;
+        [Header("Entity: References")]
         [SerializeField] private protected SpriteRenderer bodySpriteRenderer;
-        private protected PlayerController player;
 
-        [Header("Settings")]
+        [Header("Entity: Settings")]
         [SerializeField] private protected float moveSpeed = 3f;
         [SerializeField] private protected float rotationSpeed = 20f;
 
         public int CurrentHealth;
         public int MaxHealth = 100;
 
-        [SerializeField] private protected int damage = 10;
-        [SerializeField] private protected float fireRate = 1f;
-        [SerializeField] private protected float shootStrength = 1f;
         private protected Color startingBodyColor;
         private protected bool takeDamageCoroutineStarted;
 
-        private protected float distanceFromPlayer => Vector3.Distance(transform.position, player.transform.position);
+        private protected State currentState;
 
-        private protected List<Coroutine> stateCoroutines = new List<Coroutine>();
+        private protected int team = 0;
+        public int Team => team;
 
         private void Awake()
         {
@@ -36,7 +31,7 @@ namespace FirstGameProg2Game
 
         protected virtual void OnAwake()
         {
-            player = FindObjectOfType<PlayerController>();
+            SetupStates();
         }
 
         private void Start()
@@ -58,6 +53,8 @@ namespace FirstGameProg2Game
 
         protected virtual void OnUpdate()
         {
+            currentState.Update();
+
             HandleHealth();
         }
 
@@ -68,7 +65,25 @@ namespace FirstGameProg2Game
 
         protected virtual void OnFixedUpdate()
         {
+            currentState.FixedUpdate();
+        }
 
+        protected virtual void SetupStates()
+        {
+
+        }
+
+        protected virtual void StartWithState(State state)
+        {
+            currentState = state;
+            currentState.Enter();
+        }
+
+        protected virtual void ChangeState(State newState)
+        {
+            currentState.Exit();
+            currentState = newState;
+            currentState.Enter();
         }
 
         protected virtual void OnDeath()
@@ -76,7 +91,7 @@ namespace FirstGameProg2Game
             Destroy(gameObject);
         }
 
-        protected virtual void LookAt(Vector2 pos)
+        public void LookAt(Vector2 pos)
         {
             Vector2 dir = pos - (Vector2)transform.position;
 
@@ -115,6 +130,15 @@ namespace FirstGameProg2Game
 
             takeDamageCoroutineStarted = false;
         }
-    }
 
+        public void SetTeam(int newTeam)
+        {
+            team = newTeam;
+        }
+
+        protected float GetDistanceFromEntity(Entity entity)
+        {
+            return Vector3.Distance(transform.position, entity.transform.position);
+        }
+    }
 }
