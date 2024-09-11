@@ -43,8 +43,6 @@ namespace FirstGameProg2Game
         protected override void OnDeath()
         {
             base.OnDeath();
-
-            Destroy(gameObject);
         }
 
         protected override void SetupStates()

@@ -29,11 +29,21 @@ namespace FirstGameProg2Game
         protected override void OnDeath()
         {
             base.OnDeath();
-
-            Destroy(gameObject);
         }
 
-        protected virtual List<Entity> GetNearbyEntities(float radius)
+        protected void MoveTowards(Vector3 targetPos)
+        {
+            transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.fixedDeltaTime);
+        }
+
+        public virtual void FollowTarget(Entity target)
+        {
+            if (target == null) return;
+
+            MoveTowards(target.transform.position);
+        }
+
+        protected List<Entity> GetNearbyEntities(float radius)
         {
             List<Entity> result = new List<Entity>();
 
@@ -51,6 +61,31 @@ namespace FirstGameProg2Game
 
             return result;
         }
+
+        protected Entity GetClosestEntity(float radius)
+        {
+            List<Entity> nearbyEntities = GetNearbyEntities(radius);
+
+            if (nearbyEntities.Count == 0) return null;
+            if(nearbyEntities.Count == 1) return nearbyEntities[0];
+
+            int closestEntityIndex = 0;
+            for(int i = 0; i <  nearbyEntities.Count; i++)
+            {
+                float closestDistance = GetDistanceFromEntity(nearbyEntities[closestEntityIndex]);
+                float newDistance = GetDistanceFromEntity(nearbyEntities[i]);
+
+                if (newDistance < closestDistance) closestEntityIndex = i;
+            }
+
+            return nearbyEntities[closestEntityIndex];
+        }
+
+        protected virtual void AssignTarget(Entity target)
+        {
+            if (target == null) return;
+            currentTarget = target;
+        } 
     }
 
 }
