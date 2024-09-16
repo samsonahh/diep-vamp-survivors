@@ -147,7 +147,7 @@ namespace FirstGameProg2Game
 
             CurrentHealth -= dmg;
 
-            HitNumber hitNumber = Instantiate(hitNumberPrefab, transform.position + GetComponent<CircleCollider2D>().radius * (Vector3)Random.insideUnitCircle, Quaternion.identity);
+            HitNumber hitNumber = Instantiate(hitNumberPrefab, transform.position + GetComponent<CircleCollider2D>().radius * (Vector3)Random.insideUnitCircle.normalized, Quaternion.identity);
             hitNumber.Play(dmg);
 
             if (CurrentHealth <= 0 && MaxHealth != 0)
