@@ -76,7 +76,7 @@ namespace FirstGameProg2Game
         {
             if (collision.TryGetComponent(out Entity entity))
             {
-                if (entity.Team != team) return;
+                if (entity.Team == team) return;
 
                 entity.TakeDamage(damage);
 

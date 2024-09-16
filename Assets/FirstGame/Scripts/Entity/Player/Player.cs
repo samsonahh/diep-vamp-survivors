@@ -19,7 +19,7 @@ namespace FirstGameProg2Game
         private Vector3 moveDirection;
         private Vector3 mouseWorldPosition;
 
-        private PlayerFreePlayState moveState;
+        public PlayerFreePlayState PlayerFreePlayState { get; private set; }
 
         protected override void OnAwake()
         {
@@ -32,12 +32,18 @@ namespace FirstGameProg2Game
         {
             base.OnStart();
 
-            StartWithState(moveState);
+            StartWithState(PlayerFreePlayState);
+            SetDefaultState(PlayerFreePlayState);
         }
 
         protected override void OnUpdate()
         {
             base.OnUpdate();
+        }
+
+        public override void Die()
+        {
+            base.Die();
         }
 
         protected override void OnDeath()
@@ -49,7 +55,9 @@ namespace FirstGameProg2Game
         {
             base.SetupStates();
 
-            moveState = new PlayerFreePlayState(this);
+            PlayerFreePlayState = new PlayerFreePlayState(this);
+
+            DefaultState = PlayerFreePlayState;
         }
 
         public void HandleMovementInput()

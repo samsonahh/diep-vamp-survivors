@@ -14,6 +14,8 @@ namespace FirstGameProg2Game
         protected override void OnAwake()
         {
             base.OnAwake();
+
+            SetTeam(1);
         }
 
         protected override void OnStart()
@@ -24,6 +26,11 @@ namespace FirstGameProg2Game
         protected override void OnUpdate()
         {
             base.OnUpdate();
+        }
+
+        public override void Die()
+        {
+            base.Die();
         }
 
         protected override void OnDeath()
@@ -43,49 +50,10 @@ namespace FirstGameProg2Game
             MoveTowards(target.transform.position);
         }
 
-        protected List<Entity> GetNearbyEntities(float radius)
-        {
-            List<Entity> result = new List<Entity>();
-
-            Collider2D[] hits = Physics2D.OverlapCircleAll(transform.position, radius);
-
-            foreach(Collider2D hit in hits)
-            {
-                Entity entity = hit.GetComponent<Entity>();
-                entity = entity == null ? hit.GetComponentInParent<Entity>() : entity;
-
-                if (entity == null) continue;
-                
-                result.Add(entity);
-            }
-
-            return result;
-        }
-
-        protected Entity GetClosestEntity(float radius)
-        {
-            List<Entity> nearbyEntities = GetNearbyEntities(radius);
-
-            if (nearbyEntities.Count == 0) return null;
-            if(nearbyEntities.Count == 1) return nearbyEntities[0];
-
-            int closestEntityIndex = 0;
-            for(int i = 0; i <  nearbyEntities.Count; i++)
-            {
-                float closestDistance = GetDistanceFromEntity(nearbyEntities[closestEntityIndex]);
-                float newDistance = GetDistanceFromEntity(nearbyEntities[i]);
-
-                if (newDistance < closestDistance) closestEntityIndex = i;
-            }
-
-            return nearbyEntities[closestEntityIndex];
-        }
-
-        protected virtual void AssignTarget(Entity target)
+        public virtual void AssignTarget(Entity target)
         {
             if (target == null) return;
             currentTarget = target;
         } 
     }
-
 }

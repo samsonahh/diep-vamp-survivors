@@ -1,12 +1,9 @@
 ﻿namespace FirstGameProg2Game
 {
-    public class PlayerFreePlayState : State
+    public class PlayerFreePlayState : PlayerBaseState
     {
-        private Player player;
-
         public PlayerFreePlayState(Player player) : base(player)
         {
-            this.player = player;
         }
 
         public override void Enter()

@@ -20,6 +20,8 @@ namespace FirstGameProg2Game
 
         private void FollowTarget()
         {
+            if (followTarget == null) return;
+
             transform.position = Vector3.Lerp(transform.position, followTarget.position + offset, followSpeed * Time.deltaTime);
         }
     }
