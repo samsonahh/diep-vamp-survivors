@@ -20,7 +20,7 @@ namespace FirstGameProg2Game
 
         private IEnumerator DisappearCoroutine(float disappearDuration)
         {
-            Vector3 endPos = transform.position + 0.5f * new Vector3(Random.Range(0f, 1f), Random.Range(0f, 1f), 0f).normalized;
+            Vector3 endPos = transform.position + 0.5f * new Vector3(Random.Range(-1f, 1f), Random.Range(-1f, 1f), 0f).normalized;
 
             for (float t = 0; t < disappearDuration / 2; t += Time.deltaTime)
             {
