@@ -285,9 +285,18 @@ MonoBehaviour:
   iFrameDuration: 0.5
   bulletSpawnTransform: {fileID: 1997370477}
   bulletPrefab: {fileID: 1764832113186036376, guid: d41306bca6d83964da69e548a8081635, type: 3}
-  damage: 10
-  fireRate: 1
-  shootStrength: 15
+  currentLevel: 1
+  maxLevel: 71
+  currentEXP: 0
+  maxEXP: 0
+  levelUpAcceleration: 2
+  levelUpLinearGrowth: 15
+  baseEXP: 10
+  healthRegen: 1
+  bodyDamage: 10
+  bulletSpeed: 15
+  bulletDamage: 10
+  reloadSpeed: 1
 --- !u!1 &328515146
 GameObject:
   m_ObjectHideFlags: 0
@@ -763,6 +772,7 @@ MonoBehaviour:
   CurrentHealth: 0
   MaxHealth: 0
   iFrameDuration: 0.5
+  deathEXPDrop: 5
 --- !u!1 &1129507320
 GameObject:
   m_ObjectHideFlags: 0
@@ -1099,6 +1109,10 @@ PrefabInstance:
     - target: {fileID: 6224922020443095212, guid: 6f28c06c0a374d541be2da8180340623, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6224922020443095215, guid: 6f28c06c0a374d541be2da8180340623, type: 3}
+      propertyPath: deathEXPDrop
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6f28c06c0a374d541be2da8180340623, type: 3}

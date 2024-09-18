@@ -6,6 +6,9 @@ namespace FirstGameProg2Game
 {
     public class Enemy : Entity
     {
+        [Header("Enemy: Settings")]
+        [SerializeField] private int deathEXPDrop = 5;
+
         private protected Entity currentTarget;
         public Entity CurrentTarget => currentTarget;
 
@@ -28,9 +31,14 @@ namespace FirstGameProg2Game
             base.OnUpdate();
         }
 
-        public override void Die()
+        public override void Die(Entity killer)
         {
-            base.Die();
+            base.Die(killer);
+
+            Player player = killer as Player;
+            if (player == null) return;
+
+            player.AddEXP(deathEXPDrop);
         }
 
         protected override void OnDeath()

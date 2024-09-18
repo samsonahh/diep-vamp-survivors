@@ -14,25 +14,29 @@ namespace FirstGameProg2Game
         private int team;
         public int Team => team;
 
+        private Entity source;
+
         private void Awake()
         {
             rigidBody = GetComponent<Rigidbody2D>();
         }
 
-        public void Shoot(Vector2 dir, float shootStrength, int damage, int team)
+        public void Shoot(Vector2 dir, float shootStrength, int damage, int team, Entity source)
         {
             this.damage = damage;
             this.team = team;
+            this.source = source;
 
             rigidBody.AddForce(shootStrength * dir, ForceMode2D.Impulse);
 
             Destroy(gameObject, selfDestroyDuration);
         }
 
-        public void HomingShoot(Entity target, float bulletSpeed, int damage, int team)
+        public void HomingShoot(Entity target, float bulletSpeed, int damage, int team, Entity source)
         {
             this.damage = damage;
             this.team = team;
+            this.source = source;
 
             StartCoroutine(HomingShootCoroutine(target, bulletSpeed));
         }
@@ -78,7 +82,7 @@ namespace FirstGameProg2Game
             {
                 if (entity.Team == team) return;
 
-                entity.TakeDamage(damage);
+                entity.TakeDamage(damage, source);
 
                 Destroy(gameObject);
             }

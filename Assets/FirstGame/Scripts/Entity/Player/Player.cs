@@ -10,11 +10,26 @@ namespace FirstGameProg2Game
         [SerializeField] private Transform bulletSpawnTransform;
         [SerializeField] private BulletScript bulletPrefab;
 
-        [Header("Player: Settings")]
-        [SerializeField] private int damage = 10;
-        [SerializeField] private float fireRate = 1f;
-        [SerializeField] private float shootStrength = 15f;
-        private float fireTimer;
+        [Header("Player: Level Settings")]
+        [SerializeField] private int currentLevel = 1;
+        [SerializeField] private int maxLevel = 71;
+        [SerializeField] private int currentEXP;
+        [SerializeField] private int maxEXP;
+        [SerializeField] private float levelUpAcceleration = 10f;
+        [SerializeField] private int levelUpLinearGrowth = 20;
+        [SerializeField] private int baseEXP = 10;
+
+        [Header("Player: Stats Settings")]
+        [SerializeField] private int healthRegen = 1;
+        [SerializeField] private float healthRegenRate = 1;
+        [SerializeField] private float healthRegenPauseDurationAfterHit = 2f;
+        [SerializeField] private int bodyDamage = 10;
+        [SerializeField] private float bulletSpeed = 15f;
+        [SerializeField] private int bulletDamage = 10;
+        [SerializeField] private float reloadSpeed = 1f;
+        private float reloadTimer;
+        private float healthRegenPauseTimer;
+        private bool canRegen = true;
 
         private Vector3 moveDirection;
         private Vector3 mouseWorldPosition;
@@ -34,16 +49,22 @@ namespace FirstGameProg2Game
 
             StartWithState(PlayerFreePlayState);
             SetDefaultState(PlayerFreePlayState);
+
+            SetupLevel();
+
+            StartCoroutine(RegenCoroutine());
         }
 
         protected override void OnUpdate()
         {
             base.OnUpdate();
+
+            HandleLevel();
         }
 
-        public override void Die()
+        public override void Die(Entity s)
         {
-            base.Die();
+            base.Die(s);
         }
 
         protected override void OnDeath()
@@ -58,6 +79,85 @@ namespace FirstGameProg2Game
             PlayerFreePlayState = new PlayerFreePlayState(this);
 
             DefaultState = PlayerFreePlayState;
+        }
+
+        protected override void HandleHealth()
+        {
+            base.HandleHealth();
+
+            canRegen = CurrentHealth < MaxHealth && healthRegenPauseTimer > healthRegenPauseDurationAfterHit;
+
+            if(healthRegenPauseTimer < healthRegenPauseDurationAfterHit * 2f) healthRegenPauseTimer += Time.deltaTime;
+        }
+
+        private IEnumerator RegenCoroutine()
+        {
+            while (true)
+            {
+                if (!canRegen)
+                {
+                    yield return null;
+                    continue;
+                }
+
+                yield return new WaitForSeconds(healthRegenRate);
+
+                Heal(healthRegen);
+            }
+        }
+
+        public override void Heal(int health)
+        {
+            if (!canRegen) return;
+
+            base.Heal(health);
+        }
+
+        public override bool TakeDamage(int dmg, Entity source)
+        {
+            if (!base.TakeDamage(dmg, source)) return false;
+
+            healthRegenPauseTimer = 0f;
+            canRegen = false;
+
+            return true;
+        }
+
+        private void SetupLevel()
+        {
+            maxEXP = CalculateMaxEXPForLevel(currentLevel);
+        }
+
+        private void HandleLevel()
+        {
+            AddEXP(0);
+        }
+
+        public void LevelUp()
+        {
+            if (currentLevel >= maxLevel) return;
+
+            int overfillEXP = currentEXP >= maxEXP ? currentEXP - maxEXP : currentEXP;
+
+            currentLevel++;
+            maxEXP = CalculateMaxEXPForLevel(currentLevel);
+
+            currentEXP = overfillEXP;
+        }
+
+        public void AddEXP(int amt)
+        {
+            currentEXP += amt;
+
+            if(currentEXP >= maxEXP)
+            {
+                LevelUp();
+            }
+        }
+
+        private int CalculateMaxEXPForLevel(int level)
+        {
+            return (int)Mathf.Floor(levelUpAcceleration * level * level) + levelUpLinearGrowth * level + baseEXP;
         }
 
         public void HandleMovementInput()
@@ -77,7 +177,7 @@ namespace FirstGameProg2Game
 
         public void HandleMouseClickInput()
         {
-            if (fireTimer < fireRate) return;
+            if (reloadTimer < reloadSpeed) return;
 
             if (Input.GetKey(KeyCode.Mouse0))
             {
@@ -97,22 +197,22 @@ namespace FirstGameProg2Game
 
         public void HandleFireRateTimer()
         {
-            if (fireTimer < fireRate * 2f) fireTimer += Time.deltaTime;
+            if (reloadTimer < reloadSpeed * 2f) reloadTimer += Time.deltaTime;
         }
 
         public void ResetFireTimer()
         {
-            fireTimer = fireRate;
+            reloadTimer = reloadSpeed;
         }
 
         public void FireBullet()
         {
-            fireTimer = 0f;
+            reloadTimer = 0f;
 
             Vector2 dir = ((Vector2)(mouseWorldPosition - transform.position)).normalized;
 
             BulletScript bullet = Instantiate(bulletPrefab, bulletSpawnTransform.position, Quaternion.identity);
-            bullet.Shoot(dir, shootStrength, damage, team);
+            bullet.Shoot(dir, bulletSpeed, bulletDamage, team, this);
         }
     }
 }

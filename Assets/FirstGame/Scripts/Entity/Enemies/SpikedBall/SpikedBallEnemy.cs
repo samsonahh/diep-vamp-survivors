@@ -37,9 +37,9 @@ namespace FirstGameProg2Game
             EnemyChaseState = new EnemyChaseState(this, chaseRadius);
         }
 
-        public override void Die()
+        public override void Die(Entity s)
         {
-            base.Die();
+            base.Die(s);
         }
 
         protected override void OnDeath()
@@ -58,7 +58,7 @@ namespace FirstGameProg2Game
             {
                 if (entity.Team == team) return;
 
-                entity.TakeDamage(contactDamage);
+                entity.TakeDamage(contactDamage, this);
             }
         }
     }

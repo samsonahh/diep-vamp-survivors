@@ -98,7 +98,7 @@ namespace FirstGameProg2Game
             currentState.Enter();
         }
 
-        public virtual void Die()
+        public virtual void Die(Entity source)
         {
             Destroy(gameObject);
 
@@ -127,7 +127,7 @@ namespace FirstGameProg2Game
             LookAt(target.transform.position);
         }
 
-        private void HandleHealth()
+        protected virtual void HandleHealth()
         {
             CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
         }
@@ -137,9 +137,9 @@ namespace FirstGameProg2Game
             if (iFrameTimer < iFrameDuration * 2f) iFrameTimer += Time.deltaTime;
         }
 
-        public void TakeDamage(int dmg)
+        public virtual bool TakeDamage(int dmg, Entity source)
         {
-            if (iFrameTimer < iFrameDuration) return;
+            if (iFrameTimer < iFrameDuration) return false;
 
             if (!takeDamageCoroutineStarted) StartCoroutine(TakeDamageCoroutine());
 
@@ -147,13 +147,16 @@ namespace FirstGameProg2Game
 
             CurrentHealth -= dmg;
 
-            HitNumber hitNumber = Instantiate(hitNumberPrefab, transform.position + GetComponent<CircleCollider2D>().radius * (Vector3)Random.insideUnitCircle.normalized, Quaternion.identity);
-            hitNumber.Play(dmg);
+            Vector3 randomHitNumDir = (Vector3)Random.insideUnitCircle.normalized;
+            HitNumber hitNumber = Instantiate(hitNumberPrefab, transform.position + GetComponent<CircleCollider2D>().radius * randomHitNumDir, Quaternion.identity);
+            hitNumber.Play(dmg, randomHitNumDir);
 
             if (CurrentHealth <= 0 && MaxHealth != 0)
             {
-                Die();
+                Die(source);
             }
+
+            return true;
         }
 
         private IEnumerator TakeDamageCoroutine()
@@ -169,7 +172,7 @@ namespace FirstGameProg2Game
             takeDamageCoroutineStarted = false;
         }
 
-        public void Heal(int health)
+        public virtual void Heal(int health)
         {
             CurrentHealth += health;
         }
