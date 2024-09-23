@@ -213,6 +213,34 @@ namespace FirstGameProg2Game
 
             BulletScript bullet = Instantiate(bulletPrefab, bulletSpawnTransform.position, Quaternion.identity);
             bullet.Shoot(dir, bulletSpeed, bulletDamage, team, this);
+
+            StartCoroutine(ShootCoroutine());
+        }
+
+        private IEnumerator ShootCoroutine()
+        {
+            float startScale = 1f;
+            float endScale = 1.25f;
+
+            float duration = 0.15f;
+
+            Vector3 startLocalScale = new Vector3(startScale * startingScale.x, startingScale.y, startingScale.z);
+            Vector3 endLocalScale = new Vector3(endScale * startingScale.x, startingScale.y, startingScale.z);
+
+            for(float t = 0; t < duration / 2; t += Time.deltaTime)
+            {
+                float parameter = EasingFunctions.OutQuint(t / duration / 2f);
+                bodySpriteRenderer.transform.parent.localScale = Vector3.Lerp(startLocalScale, endLocalScale, parameter);
+                yield return null;
+            }
+            for (float t = 0; t < duration / 2; t += Time.deltaTime)
+            {
+                float parameter = EasingFunctions.OutQuint(t / duration / 2f);
+                bodySpriteRenderer.transform.parent.localScale = Vector3.Lerp(endLocalScale, startLocalScale, parameter);
+                yield return null;
+            }
+
+            bodySpriteRenderer.transform.parent.localScale = startingScale;
         }
     }
 }

@@ -390,6 +390,7 @@ MonoBehaviour:
   CurrentHealth: 0
   MaxHealth: 75
   iFrameDuration: 0.5
+  deathEXPDrop: 10
   contactDamage: 10
   chaseRadius: Infinity
 --- !u!58 &6224922020443095214

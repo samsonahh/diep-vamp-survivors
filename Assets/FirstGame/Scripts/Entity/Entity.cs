@@ -21,6 +21,7 @@ namespace FirstGameProg2Game
 
         private protected Color startingBodyColor;
         private protected bool takeDamageCoroutineStarted;
+        private protected Vector3 startingScale;
 
         private protected State currentState;
         public State DefaultState { get; protected set; }
@@ -50,6 +51,7 @@ namespace FirstGameProg2Game
             CurrentHealth = MaxHealth;
 
             startingBodyColor = bodySpriteRenderer.color;
+            startingScale = bodySpriteRenderer.transform.parent.localScale;
         }
 
         private void Update()
@@ -161,12 +163,28 @@ namespace FirstGameProg2Game
 
         private IEnumerator TakeDamageCoroutine()
         {
+            float duration = 0.15f;
+            
             takeDamageCoroutineStarted = true;
 
             bodySpriteRenderer.color = Color.red;
 
-            yield return new WaitForSeconds(0.15f);
+            float startScale = 1f;
+            float endScale = 0.92f;
+            for(float t = 0; t < duration/2f; t += Time.deltaTime)
+            {
+                float parameter = EasingFunctions.OutCubic(t / (duration / 2f));
+                bodySpriteRenderer.transform.parent.localScale = Vector3.Lerp(startScale * startingScale, endScale * startingScale, parameter);
+                yield return null;
+            }
+            for (float t = 0; t < duration / 2f; t += Time.deltaTime)
+            {
+                float parameter = EasingFunctions.InCubic(t / (duration / 2f));
+                bodySpriteRenderer.transform.parent.localScale = Vector3.Lerp(endScale * startingScale, startScale * startingScale, parameter);
+                yield return null;
+            }
 
+            bodySpriteRenderer.transform.parent.localScale = startingScale;
             bodySpriteRenderer.color = startingBodyColor;
 
             takeDamageCoroutineStarted = false;
