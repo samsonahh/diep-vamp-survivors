@@ -150,7 +150,7 @@ namespace FirstGameProg2Game
             CurrentHealth -= dmg;
 
             Vector3 randomHitNumDir = (Vector3)Random.insideUnitCircle.normalized;
-            HitNumber hitNumber = Instantiate(hitNumberPrefab, transform.position + GetComponent<CircleCollider2D>().radius * randomHitNumDir, Quaternion.identity);
+            HitNumber hitNumber = Instantiate(hitNumberPrefab, transform.position + startingScale.x/2f * randomHitNumDir, Quaternion.identity);
             hitNumber.Play(dmg, randomHitNumDir);
 
             if (CurrentHealth <= 0 && MaxHealth != 0)

@@ -220,7 +220,7 @@ namespace FirstGameProg2Game
         private IEnumerator ShootCoroutine()
         {
             float startScale = 1f;
-            float endScale = 1.25f;
+            float endScale = 1.2f;
 
             float duration = 0.15f;
 
