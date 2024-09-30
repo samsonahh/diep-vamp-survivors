@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FirstGameProg2Game
 {
@@ -8,6 +9,7 @@ namespace FirstGameProg2Game
     {
         [Header("Entity: References")]
         [SerializeField] private protected SpriteRenderer bodySpriteRenderer;
+        [SerializeField] private protected Slider hpSlider;
         [SerializeField] private protected HitNumber hitNumberPrefab;
 
         [Header("Entity: Settings")]
@@ -22,6 +24,8 @@ namespace FirstGameProg2Game
         private protected Color startingBodyColor;
         private protected bool takeDamageCoroutineStarted;
         private protected Vector3 startingScale;
+
+        private Vector3 hpSliderCanvasStartPos;
 
         private protected State currentState;
         public State DefaultState { get; protected set; }
@@ -52,6 +56,8 @@ namespace FirstGameProg2Game
 
             startingBodyColor = bodySpriteRenderer.color;
             startingScale = bodySpriteRenderer.transform.parent.localScale;
+
+            hpSliderCanvasStartPos = hpSlider.transform.parent.localPosition;
         }
 
         private void Update()
@@ -64,6 +70,7 @@ namespace FirstGameProg2Game
             currentState?.Update();
 
             HandleHealth();
+            HandleHealthBar();
             HandleIFrames();
         }
 
@@ -119,7 +126,7 @@ namespace FirstGameProg2Game
             float angle = Mathf.Atan2(dir.y, dir.x) * Mathf.Rad2Deg;
             Quaternion targetRotation = Quaternion.Euler(0, 0, angle);
 
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            bodySpriteRenderer.transform.parent.localRotation = Quaternion.Lerp(bodySpriteRenderer.transform.parent.localRotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
         public void LookAt(Entity target)
@@ -132,6 +139,18 @@ namespace FirstGameProg2Game
         protected virtual void HandleHealth()
         {
             CurrentHealth = Mathf.Clamp(CurrentHealth, 0, MaxHealth);
+        }
+
+        private void HandleHealthBar()
+        {
+            hpSlider.transform.parent.position = transform.position + transform.localScale.x * hpSliderCanvasStartPos;
+            hpSlider.transform.parent.rotation = Quaternion.identity;
+
+            float targetValue = MaxHealth != 0 ? CurrentHealth / (float)MaxHealth : 0;
+
+            hpSlider.value = Mathf.Lerp(hpSlider.value, targetValue, 10f * Time.unscaledDeltaTime);
+
+            hpSlider.gameObject.SetActive(hpSlider.value < 0.999f);
         }
 
         private void HandleIFrames()
@@ -157,6 +176,8 @@ namespace FirstGameProg2Game
             {
                 Die(source);
             }
+
+            CameraController.Instance.ShakeCamera(1f, 0.1f);
 
             return true;
         }

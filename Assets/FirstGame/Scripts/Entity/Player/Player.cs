@@ -119,6 +119,7 @@ namespace FirstGameProg2Game
 
             healthRegenPauseTimer = 0f;
             canRegen = false;
+            CameraController.Instance.ShakeCamera(3f, 0.2f);
 
             return true;
         }

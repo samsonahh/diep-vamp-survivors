@@ -34,7 +34,7 @@ namespace FirstGameProg2Game
         {
             base.SetupStates();
 
-            EnemyChaseState = new EnemyChaseState(this, chaseRadius);
+            EnemyChaseState = new EnemyChaseState(this, chaseRadius, false);
         }
 
         public override void Die(Entity s)

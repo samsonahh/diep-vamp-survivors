@@ -5,10 +5,12 @@ namespace FirstGameProg2Game
     public class EnemyChaseState : EnemyBaseState
     {
         private float chaseRadius = Mathf.Infinity;
+        private bool lookAt;
 
-        public EnemyChaseState(Enemy enemy, float chaseRadius) : base(enemy)
+        public EnemyChaseState(Enemy enemy, float chaseRadius, bool lookAt) : base(enemy)
         {
             this.chaseRadius = chaseRadius;
+            this.lookAt = lookAt;
         }
 
         public override void Enter()
@@ -30,7 +32,7 @@ namespace FirstGameProg2Game
         {
             enemy.AssignTarget(enemy.GetClosestEntity(enemy.GetNearbyEntities(chaseRadius, enemy.Team, true)));
 
-            enemy.LookAt(enemy.CurrentTarget);
+            if(lookAt) enemy.LookAt(enemy.CurrentTarget);
         }
     }
 }
