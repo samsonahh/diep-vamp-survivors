@@ -4,6 +4,7 @@ using System.Diagnostics.Contracts;
 using System.Threading;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 namespace FirstGameProg2Game
@@ -18,7 +19,7 @@ namespace FirstGameProg2Game
         private Player player;
 
         [Header("Resource Settings")]
-        [SerializeField] private List<ResourceEntity> gameResources = new List<ResourceEntity>();
+        [SerializeField] private List<SerializableDictKeyValue<ResourceEntity, int>> gameResources;
         [SerializeField] private int maxResources = 100;
         [SerializeField] private float resourceSpawnInterval = 2.5f;
         private List<ResourceEntity> currentResources = new List<ResourceEntity>();
@@ -44,7 +45,9 @@ namespace FirstGameProg2Game
         [SerializeField] private float difficultyGrowthRate = 0.1f;
         [SerializeField] private float difficultyMidPoint = 90f;
         private float gameTimer;
+
         public GameState GameState { get; private set; }
+        [HideInInspector] public UnityEvent<GameState> OnGameStateChanged;
 
         private void Awake()
         {
@@ -63,6 +66,14 @@ namespace FirstGameProg2Game
 
         private void Update()
         {
+            UpdateGameState();
+
+            HandleDifficulty();
+            HandleScore();
+        }
+
+        private void UpdateGameState()
+        {
             switch (GameState)
             {
                 case GameState.PLAYING:
@@ -73,20 +84,17 @@ namespace FirstGameProg2Game
                     break;
                 case GameState.PAUSED:
 
-                    
+
 
                     break;
                 case GameState.END:
 
-                    
+
 
                     break;
                 default:
                     break;
             }
-
-            HandleDifficulty();
-            HandleScore();
         }
 
         public void ChangeState(GameState newState)
@@ -107,7 +115,7 @@ namespace FirstGameProg2Game
                     break;
                 case GameState.END:
 
-                    Time.timeScale = 0f;
+
 
                     break;
                 default:
@@ -115,6 +123,7 @@ namespace FirstGameProg2Game
             }
 
             GameState = newState;
+            OnGameStateChanged?.Invoke(newState);
         }
 
         private void SpawnInitialResources()
@@ -147,14 +156,7 @@ namespace FirstGameProg2Game
             {
                 resourceSpawnTimer = 0f;
 
-                int randomIndex = 0;
-                float randomPercent = Random.Range(0f, 1f);
-                if (randomPercent > triangleResourceChance) randomIndex = 1;
-                if (randomPercent > triangleResourceChance + squareResourceChance) randomIndex = 2;
-
-                Vector3 randomPosition = new Vector3(Random.Range(-25f, 25f), Random.Range(-25f, 25f), 0);
-                Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
-                currentResources.Add(Instantiate(gameResources[randomIndex], randomPosition, randomRotation, transform));
+                SpawnRandomResource();
             }
         }
 
@@ -176,15 +178,7 @@ namespace FirstGameProg2Game
                 enemySpawnTimer = 0f;
                 enemySpawnInterval = Random.Range(scaledEnemySpawnIntervalRange.x, scaledEnemySpawnIntervalRange.y);
 
-                int randomIndex = Random.Range(0, gameEnemies.Count);
-
-                Vector3 randomPosition = GetRandomPositionAwayFromPlayer();
-                Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
-
-                Enemy spawnedEnemy = Instantiate(gameEnemies[randomIndex], randomPosition, randomRotation, transform);
-                spawnedEnemy.AdjustToDifficulty();
-
-                currentEnemies.Add(spawnedEnemy);
+                SpawnRandomEnemy();
             }
         }
 
@@ -210,6 +204,31 @@ namespace FirstGameProg2Game
         private void HandleScore()
         {
             scoreText.text = $"Score: {Score}";
+        }
+
+        private void SpawnRandomResource()
+        {
+            int randomIndex = 0;
+            float randomPercent = Random.Range(0f, 1f);
+            if (randomPercent > triangleResourceChance) randomIndex = 1;
+            if (randomPercent > triangleResourceChance + squareResourceChance) randomIndex = 2;
+
+            Vector3 randomPosition = new Vector3(Random.Range(-25f, 25f), Random.Range(-25f, 25f), 0);
+            Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
+            currentResources.Add(Instantiate(gameResources[randomIndex], randomPosition, randomRotation, transform));
+        }
+
+        private void SpawnRandomEnemy()
+        {
+            int randomIndex = Random.Range(0, gameEnemies.Count);
+
+            Vector3 randomPosition = GetRandomPositionAwayFromPlayer();
+            Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
+
+            Enemy spawnedEnemy = Instantiate(gameEnemies[randomIndex], randomPosition, randomRotation, transform);
+            spawnedEnemy.AdjustToDifficulty();
+
+            currentEnemies.Add(spawnedEnemy);
         }
 
         private Vector3 GetRandomPositionAwayFromPlayer()

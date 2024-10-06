@@ -4068,6 +4068,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   scoreText: {fileID: 585158731}
   difficultyText: {fileID: 891653142}
+  test:
+  - Key: {fileID: 0}
+    Value: 0
   gameResources:
   - {fileID: 1165308095748635043, guid: eb74a7a7d09df3445a04aba3c1849b03, type: 3}
   - {fileID: 9177392564288815480, guid: 366f86ba941e990499bcf64c6c27f07d, type: 3}
@@ -4086,6 +4089,9 @@ MonoBehaviour:
   maxDifficulty: 5
   difficultyGrowthRate: 0.075
   difficultyMidPoint: 180
+  OnGameStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &1587496179
 Transform:
   m_ObjectHideFlags: 0
