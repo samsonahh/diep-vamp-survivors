@@ -27,6 +27,8 @@ namespace FirstGameProg2Game
         protected override void OnDeath()
         {
             base.OnDeath();
+
+            if (GameManager.Instance != null) GameManager.Instance.AddScore(deathEXPDrop);
         }
     }
 }

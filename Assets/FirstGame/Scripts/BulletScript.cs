@@ -74,6 +74,8 @@ namespace FirstGameProg2Game
             CheckEntityCollision(collision);
 
             CheckOtherBulletCollision(collision);
+
+            CheckWallCollision(collision);
         }
 
         private void CheckEntityCollision(Collider2D collision)
@@ -95,6 +97,14 @@ namespace FirstGameProg2Game
                 if (bullet.Team == team) return;
 
                 Destroy(bullet.gameObject);
+                Destroy(gameObject);
+            }
+        }
+
+        private void CheckWallCollision(Collider2D collision)
+        {
+            if (collision.gameObject.tag == "Wall")
+            {
                 Destroy(gameObject);
             }
         }

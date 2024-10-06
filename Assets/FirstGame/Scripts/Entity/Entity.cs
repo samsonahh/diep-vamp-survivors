@@ -18,12 +18,12 @@ namespace FirstGameProg2Game
 
         public int CurrentHealth;
         public int MaxHealth = 100;
-        [SerializeField] private protected float iFrameDuration = 0.5f;
-        private float iFrameTimer = Mathf.Infinity;
 
         private protected Color startingBodyColor;
         private protected bool takeDamageCoroutineStarted;
         private protected Vector3 startingScale;
+
+        private protected bool deathCoroutineStarted;
 
         private Vector3 hpSliderCanvasStartPos;
 
@@ -71,7 +71,6 @@ namespace FirstGameProg2Game
 
             HandleHealth();
             HandleHealthBar();
-            HandleIFrames();
         }
 
         private void FixedUpdate()
@@ -109,14 +108,37 @@ namespace FirstGameProg2Game
 
         public virtual void Die(Entity source)
         {
-            Destroy(gameObject);
+            if(!deathCoroutineStarted) StartCoroutine(DeathFadeCoroutine());
 
-            OnDeath();
+            Destroy(hpSlider.transform.parent.gameObject);
         }
 
         protected virtual void OnDeath()
         {
+            
+        }
 
+        private IEnumerator DeathFadeCoroutine()
+        {
+            deathCoroutineStarted = true;
+
+            enabled = false;
+
+            float duration = 0.15f;
+
+            float startScale = 1f;
+            for (float t = 0; t < duration; t += Time.deltaTime)
+            {
+                float parameter = EasingFunctions.OutCubic(t / duration);
+                bodySpriteRenderer.transform.parent.localScale = Vector3.Lerp(startScale * startingScale, Vector3.zero, parameter);
+                yield return null;
+            }
+
+            bodySpriteRenderer.transform.parent.localScale = Vector3.zero;
+
+            OnDeath();
+
+            Destroy(gameObject);
         }
 
         public void LookAt(Vector2 pos)
@@ -150,21 +172,12 @@ namespace FirstGameProg2Game
 
             hpSlider.value = Mathf.Lerp(hpSlider.value, targetValue, 10f * Time.unscaledDeltaTime);
 
-            hpSlider.gameObject.SetActive(hpSlider.value < 0.999f);
+            hpSlider.transform.parent.gameObject.SetActive(hpSlider.value < 0.99f);
         }
 
-        private void HandleIFrames()
+        public virtual void TakeDamage(int dmg, Entity source)
         {
-            if (iFrameTimer < iFrameDuration * 2f) iFrameTimer += Time.deltaTime;
-        }
-
-        public virtual bool TakeDamage(int dmg, Entity source)
-        {
-            if (iFrameTimer < iFrameDuration) return false;
-
             if (!takeDamageCoroutineStarted) StartCoroutine(TakeDamageCoroutine());
-
-            iFrameTimer = 0f;
 
             CurrentHealth -= dmg;
 
@@ -177,9 +190,7 @@ namespace FirstGameProg2Game
                 Die(source);
             }
 
-            CameraController.Instance.ShakeCamera(1f, 0.1f);
-
-            return true;
+            CameraController.Instance.ShakeCamera(0.5f, 0.1f);
         }
 
         private IEnumerator TakeDamageCoroutine()
@@ -275,6 +286,11 @@ namespace FirstGameProg2Game
             }
 
             return nearbyEntities[closestEntityIndex];
+        }
+
+        private protected int CalculateRandomDamage(int baseDamage)
+        {
+            return baseDamage + (int)Mathf.Ceil(baseDamage * Random.Range(-0.25f, 0.5f));
         }
     }
 }

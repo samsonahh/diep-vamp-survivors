@@ -1,6 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace FirstGameProg2Game
 {
@@ -11,8 +13,10 @@ namespace FirstGameProg2Game
         [SerializeField] private BulletScript bulletPrefab;
 
         [Header("Player: Level Settings")]
+        [SerializeField] private Slider expSlider;
+        [SerializeField] private TMP_Text levelText;
         [SerializeField] private int currentLevel = 1;
-        [SerializeField] private int maxLevel = 71;
+        [SerializeField] private int maxLevel = 64;
         [SerializeField] private int currentEXP;
         [SerializeField] private int maxEXP;
         [SerializeField] private float levelUpAcceleration = 10f;
@@ -30,6 +34,38 @@ namespace FirstGameProg2Game
         private float reloadTimer;
         private float healthRegenPauseTimer;
         private bool canRegen = true;
+        [SerializeField] private protected float iFrameDuration = 0.5f;
+        private float iFrameTimer = Mathf.Infinity;
+
+        [Header("Player: Upgrades UI")]
+        [SerializeField] private Slider healthRegenSlider;
+        [SerializeField] private Slider maxHealthSlider;
+        [SerializeField] private Slider bodyDamageSlider;
+        [SerializeField] private Slider bulletSpeedSlider;
+        [SerializeField] private Slider bulletDamageSlider;
+        [SerializeField] private Slider reloadSpeedSlider;
+        [SerializeField] private Slider movementSpeedSlider;
+        [SerializeField] private TMP_Text upgradesCountText;
+
+        [Header("Player: Upgrades")]
+        [SerializeField] private int availableUpgrades = 0;
+        private int maxUpgrades = 9;
+        [SerializeField] private int healthRegenUpgrades = 0;
+        [SerializeField] private int maxHealthUpgrades = 0;
+        [SerializeField] private int bodyDamageUpgrades = 0;
+        [SerializeField] private int bulletSpeedUpgrades = 0;
+        [SerializeField] private int bulletDamageUpgrades = 0;
+        [SerializeField] private int reloadSpeedUpgrades = 0;
+        [SerializeField] private int movementSpeedUpgrades = 0;
+
+        [Header("Player: Upgrade Add/Mult Amounts")]
+        [SerializeField] private int healthRegenAddAmount = 1;
+        [SerializeField] private int maxHealthAddAmount = 50;
+        [SerializeField] private int bodyDamageAddAmount = 10;
+        [SerializeField] private float bulletSpeedAddAmount = 5f;
+        [SerializeField] private float bulletDamageMultiplyAmount = 1.26f;
+        [SerializeField] private float reloadSpeedMultiplyAmount = 0.85f;
+        [SerializeField] private float movementSpeedMultiplyAmount = 1.1f;
 
         private Vector3 moveDirection;
         private Vector3 mouseWorldPosition;
@@ -59,7 +95,12 @@ namespace FirstGameProg2Game
         {
             base.OnUpdate();
 
+            HandleUpgradeButtonsInput();
+
+            HandleIFrames();
+
             HandleLevel();
+            HandleUpgradesUI();
         }
 
         public override void Die(Entity s)
@@ -70,6 +111,8 @@ namespace FirstGameProg2Game
         protected override void OnDeath()
         {
             base.OnDeath();
+
+            GameManager.Instance.ChangeState(GameState.END);
         }
 
         protected override void SetupStates()
@@ -88,6 +131,11 @@ namespace FirstGameProg2Game
             canRegen = CurrentHealth < MaxHealth && healthRegenPauseTimer > healthRegenPauseDurationAfterHit;
 
             if(healthRegenPauseTimer < healthRegenPauseDurationAfterHit * 2f) healthRegenPauseTimer += Time.deltaTime;
+        }
+
+        private void HandleIFrames()
+        {
+            if (iFrameTimer < iFrameDuration * 2f) iFrameTimer += Time.deltaTime;
         }
 
         private IEnumerator RegenCoroutine()
@@ -113,15 +161,17 @@ namespace FirstGameProg2Game
             base.Heal(health);
         }
 
-        public override bool TakeDamage(int dmg, Entity source)
+        public override void TakeDamage(int dmg, Entity source)
         {
-            if (!base.TakeDamage(dmg, source)) return false;
+            if (iFrameTimer < iFrameDuration) return;
+
+            iFrameTimer = 0f;
+
+            base.TakeDamage(dmg, source);
 
             healthRegenPauseTimer = 0f;
             canRegen = false;
-            CameraController.Instance.ShakeCamera(3f, 0.2f);
-
-            return true;
+            CameraController.Instance.ShakeCamera(1.5f, 0.2f);
         }
 
         private void SetupLevel()
@@ -132,6 +182,11 @@ namespace FirstGameProg2Game
         private void HandleLevel()
         {
             AddEXP(0);
+
+            float targetSliderValue = currentEXP / (float)maxEXP;
+
+            levelText.text = $"Lvl {currentLevel}";
+            expSlider.value = Mathf.Lerp(expSlider.value, targetSliderValue, 10f * Time.unscaledDeltaTime);
         }
 
         public void LevelUp()
@@ -144,6 +199,8 @@ namespace FirstGameProg2Game
             maxEXP = CalculateMaxEXPForLevel(currentLevel);
 
             currentEXP = overfillEXP;
+
+            availableUpgrades++;
         }
 
         public void AddEXP(int amt)
@@ -186,6 +243,17 @@ namespace FirstGameProg2Game
             }
         }
 
+        public void HandleUpgradeButtonsInput()
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1)) AddHealthRegen();
+            if (Input.GetKeyDown(KeyCode.Alpha2)) AddMaxHealth();
+            if (Input.GetKeyDown(KeyCode.Alpha3)) AddBodyDamage();
+            if (Input.GetKeyDown(KeyCode.Alpha4)) AddBulletSpeed();
+            if (Input.GetKeyDown(KeyCode.Alpha5)) AddBulletDamage();
+            if (Input.GetKeyDown(KeyCode.Alpha6)) AddReloadSpeed();
+            if (Input.GetKeyDown(KeyCode.Alpha7)) AddMovementSpeed();
+        }
+
         public void HandleMovement()
         {
             transform.Translate(moveSpeed * Time.fixedDeltaTime * moveDirection, Space.World);
@@ -212,8 +280,10 @@ namespace FirstGameProg2Game
 
             Vector2 dir = ((Vector2)(mouseWorldPosition - transform.position)).normalized;
 
+            int randomDamage = CalculateRandomDamage(bulletDamage);
+
             BulletScript bullet = Instantiate(bulletPrefab, bulletSpawnTransform.position, Quaternion.identity);
-            bullet.Shoot(dir, bulletSpeed, bulletDamage, team, this);
+            bullet.Shoot(dir, bulletSpeed, randomDamage, team, this);
 
             StartCoroutine(ShootCoroutine());
         }
@@ -242,6 +312,125 @@ namespace FirstGameProg2Game
             }
 
             bodySpriteRenderer.transform.parent.localScale = startingScale;
+        }
+
+        private void OnCollisionStay2D(Collision2D collision)
+        {
+            CheckEntityCollision(collision);
+        }
+
+        private void CheckEntityCollision(Collision2D collision)
+        {
+            if (collision.gameObject.TryGetComponent(out Enemy enemy))
+            {
+                if (enemy.Team == team) return;
+                if (!enemy.CanTakeBodyDamage()) return;
+
+                int randomDamage = CalculateRandomDamage(bodyDamage);
+
+                enemy.TakeDamage(randomDamage, this);
+                enemy.ResetBodyDamageTimer();
+
+                CameraController.Instance.ShakeCamera(1.5f, 0.2f);
+            }
+        }
+
+        private void HandleUpgradesUI()
+        {
+            upgradesCountText.gameObject.SetActive(availableUpgrades > 0);
+            upgradesCountText.text = $"x{availableUpgrades}";
+
+            float targetHealthRegenFraction = healthRegenUpgrades / (float)maxUpgrades;
+            healthRegenSlider.value = Mathf.Lerp(healthRegenSlider.value, targetHealthRegenFraction, 10f * Time.unscaledDeltaTime);
+
+            float targetMaxHealthFraction = maxHealthUpgrades / (float)maxUpgrades;
+            maxHealthSlider.value = Mathf.Lerp(maxHealthSlider.value, targetMaxHealthFraction, 10f * Time.unscaledDeltaTime);
+
+            float targetBodyDamageFraction = bodyDamageUpgrades / (float)maxUpgrades;
+            bodyDamageSlider.value = Mathf.Lerp(bodyDamageSlider.value, targetBodyDamageFraction, 10f * Time.unscaledDeltaTime);
+
+            float targetBulletSpeedFraction = bulletSpeedUpgrades / (float)maxUpgrades;
+            bulletSpeedSlider.value = Mathf.Lerp(bulletSpeedSlider.value, targetBulletSpeedFraction, 10f * Time.unscaledDeltaTime);
+
+            float targetBulletDamageFraction = bulletDamageUpgrades / (float)maxUpgrades;
+            bulletDamageSlider.value = Mathf.Lerp(bulletDamageSlider.value, targetBulletDamageFraction, 10f * Time.unscaledDeltaTime);
+
+            float targetReloadSpeedFraction = reloadSpeedUpgrades / (float)maxUpgrades;
+            reloadSpeedSlider.value = Mathf.Lerp(reloadSpeedSlider.value, targetReloadSpeedFraction, 10f * Time.unscaledDeltaTime);
+
+            float targetMovementSpeedFraction = movementSpeedUpgrades / (float)maxUpgrades;
+            movementSpeedSlider.value = Mathf.Lerp(movementSpeedSlider.value, targetMovementSpeedFraction, 10f * Time.unscaledDeltaTime);
+
+        }
+
+        public void AddHealthRegen()
+        {
+            if (availableUpgrades <= 0) return;
+            if (healthRegenUpgrades >= maxUpgrades) return;
+
+            healthRegenUpgrades++;
+            healthRegen+=healthRegenAddAmount;
+            availableUpgrades--;
+        }
+
+        public void AddMaxHealth()
+        {
+            if (availableUpgrades <= 0) return;
+            if (maxHealthUpgrades >= maxUpgrades) return;
+
+            maxHealthUpgrades++;
+            MaxHealth += maxHealthAddAmount;
+            availableUpgrades--;
+        }
+
+        public void AddBodyDamage()
+        {
+            if (availableUpgrades <= 0) return;
+            if (bodyDamageUpgrades >= maxUpgrades) return;
+
+            bodyDamageUpgrades++;
+            bodyDamage += bodyDamageAddAmount;
+            availableUpgrades--;
+        }
+
+        public void AddBulletSpeed()
+        {
+            if (availableUpgrades <= 0) return;
+            if (bulletSpeedUpgrades >= maxUpgrades) return;
+
+            bulletSpeedUpgrades++;
+            bulletSpeed += bulletSpeedAddAmount;
+            availableUpgrades--;
+        }
+
+        public void AddBulletDamage()
+        {
+            if (availableUpgrades <= 0) return;
+            if (bulletDamageUpgrades >= maxUpgrades) return;
+
+            bulletDamageUpgrades++;
+            bulletDamage = (int)Mathf.Ceil(bulletDamage * bulletDamageMultiplyAmount);
+            availableUpgrades--;
+        }
+
+        public void AddReloadSpeed()
+        {
+            if (availableUpgrades <= 0) return;
+            if (reloadSpeedUpgrades >= maxUpgrades) return;
+
+            reloadSpeedUpgrades++;
+            reloadSpeed *= reloadSpeedMultiplyAmount;
+            availableUpgrades--;
+        }
+
+        public void AddMovementSpeed()
+        {
+            if (availableUpgrades <= 0) return;
+            if (movementSpeedUpgrades >= maxUpgrades) return;
+
+            movementSpeedUpgrades++;
+            moveSpeed *= movementSpeedMultiplyAmount;
+            availableUpgrades--;
         }
     }
 }

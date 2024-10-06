@@ -58,8 +58,17 @@ namespace FirstGameProg2Game
             {
                 if (entity.Team == team) return;
 
-                entity.TakeDamage(contactDamage, this);
+                int randomDamage = CalculateRandomDamage(contactDamage);
+
+                entity.TakeDamage(randomDamage, this);
             }
+        }
+
+        public override void AdjustToDifficulty()
+        {
+            base.AdjustToDifficulty();
+
+            contactDamage += (int)(10f * difficulty);
         }
     }
 }

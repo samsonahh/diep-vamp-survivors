@@ -13,7 +13,7 @@ namespace FirstGameProg2Game
         public void Play(int damage, Vector3 dir)
         {
             hitText.text = damage.ToString();
-            hitText.fontSize = Mathf.Lerp(125, 400, damage / 10000f);
+            hitText.fontSize = Mathf.Lerp(75, 150, damage / 200f);
 
             StartCoroutine(DisappearCoroutine(1f, dir));
         }

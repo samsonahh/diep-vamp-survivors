@@ -9,6 +9,11 @@ namespace FirstGameProg2Game
         [Header("Enemy: Settings")]
         [SerializeField] private int deathEXPDrop = 5;
 
+        private float bodyDamageTimer;
+        private float bodyDamageInterval = 0.5f;
+
+        protected float difficulty => GameManager.Instance.Difficulty;
+
         private protected Entity currentTarget;
         public Entity CurrentTarget => currentTarget;
 
@@ -29,6 +34,8 @@ namespace FirstGameProg2Game
         protected override void OnUpdate()
         {
             base.OnUpdate();
+
+            HandleIncomingBodyDamage();
         }
 
         public override void Die(Entity killer)
@@ -44,6 +51,8 @@ namespace FirstGameProg2Game
         protected override void OnDeath()
         {
             base.OnDeath();
+
+            if (GameManager.Instance != null) GameManager.Instance.AddScore(deathEXPDrop);
         }
 
         protected void MoveTowards(Vector3 targetPos)
@@ -62,6 +71,29 @@ namespace FirstGameProg2Game
         {
             if (target == null) return;
             currentTarget = target;
-        } 
+        }
+
+        private void HandleIncomingBodyDamage()
+        {
+            if (bodyDamageTimer < 2f * bodyDamageInterval) bodyDamageTimer += Time.deltaTime;
+        }
+
+        public bool CanTakeBodyDamage()
+        {
+            return bodyDamageTimer > bodyDamageInterval;
+        }
+
+        public void ResetBodyDamageTimer()
+        {
+            bodyDamageTimer = 0;
+        }
+
+        public virtual void AdjustToDifficulty()
+        {
+            moveSpeed += (difficulty - 1) / 3f;
+            MaxHealth = (int)Mathf.Ceil(MaxHealth * difficulty);
+            CurrentHealth = MaxHealth;
+            deathEXPDrop = (int)Mathf.Ceil(deathEXPDrop * difficulty);
+        }
     }
 }
