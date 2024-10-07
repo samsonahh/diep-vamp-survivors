@@ -13,6 +13,7 @@ namespace FirstGameProg2Game
         private int damage;
         private int team;
         public int Team => team;
+        private bool canHit = true;
 
         private Entity source;
 
@@ -82,7 +83,10 @@ namespace FirstGameProg2Game
         {
             if (collision.TryGetComponent(out Entity entity))
             {
+                if (!canHit) return;
                 if (entity.Team == team) return;
+
+                canHit = false;
 
                 entity.TakeDamage(damage, source);
 
@@ -94,7 +98,10 @@ namespace FirstGameProg2Game
         {
             if (collision.TryGetComponent(out BulletScript bullet))
             {
+                if (!canHit) return;
                 if (bullet.Team == team) return;
+
+                canHit = false;
 
                 Destroy(bullet.gameObject);
                 Destroy(gameObject);

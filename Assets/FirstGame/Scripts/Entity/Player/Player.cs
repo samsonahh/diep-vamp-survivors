@@ -9,7 +9,11 @@ namespace FirstGameProg2Game
     public class Player : Entity
     {
         [Header("Player: References")]
-        [SerializeField] private Transform bulletSpawnTransform;
+        [SerializeField] private GameObject originalBarrelGameObject;
+        [SerializeField] private GameObject dualBarrelGameObject;
+        [SerializeField] private Transform originalBulletSpawnTransform;
+        [SerializeField] private Transform dualBulletSpawnTransform1;
+        [SerializeField] private Transform dualBulletSpawnTransform2;
         [SerializeField] private BulletScript bulletPrefab;
 
         [Header("Player: Level Settings")]
@@ -24,6 +28,7 @@ namespace FirstGameProg2Game
         [SerializeField] private int baseEXP = 10;
 
         [Header("Player: Stats Settings")]
+        [SerializeField] private int dualBarrelUnlockLevel = 15;
         [SerializeField] private int healthRegen = 1;
         [SerializeField] private float healthRegenRate = 1;
         [SerializeField] private float healthRegenPauseDurationAfterHit = 2f;
@@ -32,6 +37,7 @@ namespace FirstGameProg2Game
         [SerializeField] private int bulletDamage = 10;
         [SerializeField] private float reloadSpeed = 1f;
         private float reloadTimer;
+        private bool dualBarrelShotSide;
         private float healthRegenPauseTimer;
         private bool canRegen = true;
         [SerializeField] private protected float iFrameDuration = 0.5f;
@@ -187,6 +193,8 @@ namespace FirstGameProg2Game
 
             levelText.text = $"Lvl {currentLevel}";
             expSlider.value = Mathf.Lerp(expSlider.value, targetSliderValue, 10f * Time.unscaledDeltaTime);
+
+            if (currentLevel >= dualBarrelUnlockLevel && !dualBarrelGameObject.activeSelf) SwitchToDualBarrel();
         }
 
         public void LevelUp()
@@ -239,7 +247,16 @@ namespace FirstGameProg2Game
 
             if (Input.GetKey(KeyCode.Mouse0))
             {
-                FireBullet();
+                if (originalBarrelGameObject.activeSelf)
+                {
+                    FireBullet(originalBulletSpawnTransform);
+                }
+                else
+                {
+                    if (dualBarrelShotSide) FireBullet(dualBulletSpawnTransform1);
+                    if (!dualBarrelShotSide) FireBullet(dualBulletSpawnTransform2);
+                    dualBarrelShotSide = !dualBarrelShotSide;
+                }
             }
         }
 
@@ -274,7 +291,7 @@ namespace FirstGameProg2Game
             reloadTimer = reloadSpeed;
         }
 
-        public void FireBullet()
+        public void FireBullet(Transform spawnTransform)
         {
             reloadTimer = 0f;
 
@@ -282,7 +299,7 @@ namespace FirstGameProg2Game
 
             int randomDamage = CalculateRandomDamage(bulletDamage);
 
-            BulletScript bullet = Instantiate(bulletPrefab, bulletSpawnTransform.position, Quaternion.identity);
+            BulletScript bullet = Instantiate(bulletPrefab, spawnTransform.position, Quaternion.identity);
             bullet.Shoot(dir, bulletSpeed, randomDamage, team, this);
 
             StartCoroutine(ShootCoroutine());
@@ -380,6 +397,7 @@ namespace FirstGameProg2Game
 
             maxHealthUpgrades++;
             MaxHealth += maxHealthAddAmount;
+            CurrentHealth += maxHealthAddAmount;
             availableUpgrades--;
         }
 
@@ -431,6 +449,14 @@ namespace FirstGameProg2Game
             movementSpeedUpgrades++;
             moveSpeed *= movementSpeedMultiplyAmount;
             availableUpgrades--;
+        }
+
+        public void SwitchToDualBarrel()
+        {
+            originalBarrelGameObject.SetActive(false);
+            dualBarrelGameObject.SetActive(true);
+
+            reloadSpeed = reloadSpeed / 2f;
         }
     }
 }

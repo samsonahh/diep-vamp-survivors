@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using TMPro;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -22,14 +23,14 @@ namespace FirstGameProg2Game
         [SerializeField] private List<SerializableDictKeyValue<ResourceEntity, int>> gameResources;
         [SerializeField] private int maxResources = 100;
         [SerializeField] private float resourceSpawnInterval = 2.5f;
+        [SerializeField] private float resourceSpawnSkewConstant = 1.5f;
         private List<ResourceEntity> currentResources = new List<ResourceEntity>();
-        private float triangleResourceChance = 0.6f;
-        private float squareResourceChance = 0.3f;
         private float resourceSpawnTimer;
 
         [Header("Enemy Settings")]
-        [SerializeField] private List<Enemy> gameEnemies = new List<Enemy>();
+        [SerializeField] private List<SerializableDictKeyValue<Enemy, int>> gameEnemies;
         [SerializeField] private int maxEnemies = 100;
+        [SerializeField] private float enemySpawnSkewConstant = 1.5f;
         [SerializeField] private float graceDuration = 20f;
         [SerializeField] private Vector2 initialEnemySpawnIntervalRange = new Vector2(1f, 5f);
         private Vector2 scaledEnemySpawnIntervalRange;
@@ -44,7 +45,7 @@ namespace FirstGameProg2Game
         [SerializeField] private float maxDifficulty = 5f;
         [SerializeField] private float difficultyGrowthRate = 0.1f;
         [SerializeField] private float difficultyMidPoint = 90f;
-        private float gameTimer;
+        [SerializeField] private float gameTimer;
 
         public GameState GameState { get; private set; }
         [HideInInspector] public UnityEvent<GameState> OnGameStateChanged;
@@ -87,6 +88,11 @@ namespace FirstGameProg2Game
 
 
                     break;
+                case GameState.UPGRADE:
+
+
+
+                    break;
                 case GameState.END:
 
 
@@ -113,6 +119,11 @@ namespace FirstGameProg2Game
                     Time.timeScale = 0f;
 
                     break;
+                case GameState.UPGRADE:
+
+                    Time.timeScale = 0f;
+
+                    break;
                 case GameState.END:
 
 
@@ -128,16 +139,9 @@ namespace FirstGameProg2Game
 
         private void SpawnInitialResources()
         {
-            for(int i = 0; i < maxResources; i++)
+            for (int i = 0; i < maxResources; i++)
             {
-                int randomIndex = 0;
-                float randomPercent = Random.Range(0f, 1f);
-                if (randomPercent > triangleResourceChance) randomIndex = 1;
-                if (randomPercent > triangleResourceChance + squareResourceChance) randomIndex = 2;
-
-                Vector3 randomPosition = new Vector3(Random.Range(-25f, 25f), Random.Range(-25f, 25f), 0);
-                Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
-                currentResources.Add(Instantiate(gameResources[randomIndex], randomPosition, randomRotation, transform));
+                SpawnRandomResource();
             }
         }
 
@@ -193,8 +197,8 @@ namespace FirstGameProg2Game
         {
             gameTimer += Time.deltaTime;
 
-            Difficulty = Mathf.Clamp(Difficulty, 1f, maxDifficulty);
-            Difficulty = baseDifficulty + maxDifficulty / (1 + Mathf.Exp(-difficultyGrowthRate * (gameTimer - difficultyMidPoint)));
+            Difficulty = baseDifficulty + (maxDifficulty-1) / (1 + Mathf.Exp(-difficultyGrowthRate * (gameTimer - difficultyMidPoint)));
+            Difficulty = Mathf.Clamp(Difficulty, baseDifficulty, maxDifficulty);
 
             scaledEnemySpawnIntervalRange = Vector2.Lerp(initialEnemySpawnIntervalRange, new Vector2(0.5f, 2f), (Difficulty - 1) / (maxDifficulty - 1));
 
@@ -208,27 +212,61 @@ namespace FirstGameProg2Game
 
         private void SpawnRandomResource()
         {
-            int randomIndex = 0;
-            float randomPercent = Random.Range(0f, 1f);
-            if (randomPercent > triangleResourceChance) randomIndex = 1;
-            if (randomPercent > triangleResourceChance + squareResourceChance) randomIndex = 2;
+            float totalWeight = 0f;
+            foreach (var keyValue in gameResources)
+            {
+                totalWeight += 1 / Mathf.Pow(keyValue.Value, resourceSpawnSkewConstant);
+            }
 
-            Vector3 randomPosition = new Vector3(Random.Range(-25f, 25f), Random.Range(-25f, 25f), 0);
-            Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
-            currentResources.Add(Instantiate(gameResources[randomIndex], randomPosition, randomRotation, transform));
-        }
-
-        private void SpawnRandomEnemy()
-        {
-            int randomIndex = Random.Range(0, gameEnemies.Count);
+            float randomFloat = Random.Range(0f, totalWeight);
 
             Vector3 randomPosition = GetRandomPositionAwayFromPlayer();
             Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
 
-            Enemy spawnedEnemy = Instantiate(gameEnemies[randomIndex], randomPosition, randomRotation, transform);
-            spawnedEnemy.AdjustToDifficulty();
+            foreach (var keyValue in gameResources)
+            {
+                float weightDifference = randomFloat - (1 / Mathf.Pow(keyValue.Value, resourceSpawnSkewConstant));
+                if (weightDifference >= 0)
+                {
+                    randomFloat = weightDifference;
+                }
+                else
+                {
+                    currentResources.Add(Instantiate(keyValue.Key, randomPosition, randomRotation, transform));
+                    break;
+                }
+            }
+        }
 
-            currentEnemies.Add(spawnedEnemy);
+        private void SpawnRandomEnemy()
+        {
+            float totalWeight = 0f;
+            foreach(var keyValue in gameEnemies)
+            {
+                totalWeight += 1 / Mathf.Pow(keyValue.Value, enemySpawnSkewConstant);
+            }
+
+            float randomFloat = Random.Range(0f, totalWeight);
+
+            Vector3 randomPosition = GetRandomPositionAwayFromPlayer();
+            Quaternion randomRotation = Quaternion.Euler(0f, 0f, Random.Range(0f, 360f));
+
+            foreach(var keyValue in gameEnemies)
+            {
+                float weightDifference = randomFloat - (1 / Mathf.Pow(keyValue.Value, enemySpawnSkewConstant));
+                if (weightDifference >= 0)
+                {
+                    randomFloat = weightDifference;
+                }
+                else
+                {
+                    Enemy spawnedEnemy = Instantiate(keyValue.Key, randomPosition, randomRotation, transform);
+                    spawnedEnemy.AdjustToDifficulty();
+
+                    currentEnemies.Add(spawnedEnemy);
+                    break;
+                }
+            }
         }
 
         private Vector3 GetRandomPositionAwayFromPlayer()
@@ -249,5 +287,6 @@ public enum GameState
 {
     PLAYING,
     PAUSED,
+    UPGRADE,
     END
 }
