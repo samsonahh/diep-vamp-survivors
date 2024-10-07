@@ -1,24 +1,22 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using System.Collections;
-using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace FirstGameProg2Game
 {
-    public class EndPanelScript : MonoBehaviour
+    public class EvolvePanelScript : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private Button retryButton;
-        [SerializeField] private TMP_Text scoreText;
+        [SerializeField] private Button dualBarrelButton;
+        [SerializeField] private Button spikesButton;
         [SerializeField] private Image backgroundImage;
 
         private Image panelImage;
         private Color initialPanelColor;
         private Vector3 initialBackgroundScale;
+
         private void Awake()
         {
             panelImage = GetComponent<Image>();
@@ -36,7 +34,8 @@ namespace FirstGameProg2Game
 
         private void Start()
         {
-            retryButton.onClick.AddListener(Retry);
+            dualBarrelButton.onClick.AddListener(DualBarrel);
+            spikesButton.onClick.AddListener(Spikes);
 
             GameManager.Instance.OnGameStateChanged.AddListener(GameManager_OnGameStateChanged);
 
@@ -45,28 +44,47 @@ namespace FirstGameProg2Game
 
         private void GameManager_OnGameStateChanged(GameState newState)
         {
-            if(newState == GameState.END)
-            {
-                gameObject.SetActive(newState == GameState.END);
-                scoreText.text = $"You died!\nScore: {GameManager.Instance.Score}";
-                Open();
-            }
+            gameObject.SetActive(newState == GameState.EVOLVE);
+            if(newState == GameState.EVOLVE) Open();
         }
 
-        private void Retry()
+        private void Resume()
         {
-            SceneManager.LoadScene("Main");
+            GameManager.Instance.ChangeState(GameState.PLAYING);
+            gameObject.SetActive(false);
+        }
+
+        private void DualBarrel()
+        {
+            FindObjectOfType<Player>().SwitchToDualBarrel();
+
+            Close();
+        }
+
+        private void Spikes()
+        {
+            FindObjectOfType<Player>().SwitchToSpikes();
+
+            Close();
         }
 
         private void Open()
         {
-            DOTween.Kill(panelImage);
-            DOTween.Kill(backgroundImage.transform);
-
             panelImage.DOColor(initialPanelColor, 1f).SetEase(Ease.OutQuint).SetUpdate(true);
             backgroundImage.transform.DOScale(initialBackgroundScale, 1f).SetEase(Ease.OutQuint).SetUpdate(true);
 
-            retryButton.interactable = true;
+            dualBarrelButton.interactable = true;
+            spikesButton.interactable = true;
+        }
+
+        private void Close()
+        {
+            panelImage.DOColor(Color.clear, 1f).SetEase(Ease.OutQuint).OnComplete(Resume).SetUpdate(true);
+            backgroundImage.transform.DOScale(Vector3.zero, 0.75f).SetEase(Ease.InQuint).SetUpdate(true);
+
+            dualBarrelButton.interactable = false;
+            spikesButton.interactable = false;
         }
     }
 }
+

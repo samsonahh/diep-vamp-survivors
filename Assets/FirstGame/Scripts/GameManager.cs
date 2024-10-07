@@ -43,8 +43,7 @@ namespace FirstGameProg2Game
         [field: SerializeField] public float Difficulty { get; private set; }
         [SerializeField] private float baseDifficulty = 1f;
         [SerializeField] private float maxDifficulty = 5f;
-        [SerializeField] private float difficultyGrowthRate = 0.1f;
-        [SerializeField] private float difficultyMidPoint = 90f;
+        [SerializeField] private float timeTillMaxDifficulty = 300f;
         [SerializeField] private float gameTimer;
 
         public GameState GameState { get; private set; }
@@ -60,6 +59,8 @@ namespace FirstGameProg2Game
 
         private void Start()
         {
+            ChangeState(GameState.PLAYING);
+
             SpawnInitialResources();
 
             enemySpawnInterval = Random.Range(initialEnemySpawnIntervalRange.x, initialEnemySpawnIntervalRange.y);
@@ -82,13 +83,15 @@ namespace FirstGameProg2Game
                     HandleResourceSpawning();
                     HandleEnemySpawning();
 
+                    HandlePauseInput();
+
                     break;
                 case GameState.PAUSED:
 
-
+                    HandlePauseInput();
 
                     break;
-                case GameState.UPGRADE:
+                case GameState.EVOLVE:
 
 
 
@@ -105,6 +108,8 @@ namespace FirstGameProg2Game
 
         public void ChangeState(GameState newState)
         {
+            if (newState == GameState) return;
+
             Debug.Log($"Changing to {newState}");
 
             switch (newState)
@@ -112,16 +117,19 @@ namespace FirstGameProg2Game
                 case GameState.PLAYING:
 
                     Time.timeScale = 1f;
+                    player.enabled = true;
 
                     break;
                 case GameState.PAUSED:
 
                     Time.timeScale = 0f;
+                    player.enabled = false;
 
                     break;
-                case GameState.UPGRADE:
+                case GameState.EVOLVE:
 
                     Time.timeScale = 0f;
+                    player.enabled = false;
 
                     break;
                 case GameState.END:
@@ -135,6 +143,21 @@ namespace FirstGameProg2Game
 
             GameState = newState;
             OnGameStateChanged?.Invoke(newState);
+        }
+
+        private void HandlePauseInput()
+        {
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                if(GameState == GameState.PLAYING)
+                {
+                    ChangeState(GameState.PAUSED);
+                }
+                else if (GameState == GameState.PAUSED)
+                {
+                    ChangeState(GameState.PLAYING);
+                }
+            }
         }
 
         private void SpawnInitialResources()
@@ -197,12 +220,18 @@ namespace FirstGameProg2Game
         {
             gameTimer += Time.deltaTime;
 
-            Difficulty = baseDifficulty + (maxDifficulty-1) / (1 + Mathf.Exp(-difficultyGrowthRate * (gameTimer - difficultyMidPoint)));
+            Difficulty = baseDifficulty + (maxDifficulty - baseDifficulty)/(timeTillMaxDifficulty+graceDuration) * (gameTimer-graceDuration);
             Difficulty = Mathf.Clamp(Difficulty, baseDifficulty, maxDifficulty);
 
-            scaledEnemySpawnIntervalRange = Vector2.Lerp(initialEnemySpawnIntervalRange, new Vector2(0.5f, 2f), (Difficulty - 1) / (maxDifficulty - 1));
+            scaledEnemySpawnIntervalRange = Vector2.Lerp(initialEnemySpawnIntervalRange, new Vector2(0.5f, 2f), (Difficulty - baseDifficulty) / (maxDifficulty - baseDifficulty));
+    
+            if(gameTimer > timeTillMaxDifficulty + 60)
+            {
+                scaledEnemySpawnIntervalRange = new Vector2(0.1f, 0.25f);
+            }
 
             difficultyText.text = $"Difficulty: {System.Math.Round(Difficulty, 3)}";
+            if(Difficulty >= maxDifficulty) difficultyText.text = $"Difficulty: {System.Math.Round(Difficulty, 3)} (MAX)";
         }
 
         private void HandleScore()
@@ -271,11 +300,11 @@ namespace FirstGameProg2Game
 
         private Vector3 GetRandomPositionAwayFromPlayer()
         {
-            Vector3 randomPosition = new Vector3(Random.Range(-25f, 25f), Random.Range(-25f, 25f), 0);
+            Vector3 randomPosition = new Vector3(Random.Range(-24f, 24f), Random.Range(-24f, 24f), 0);
             float radius = 5f;
 
             while(Vector3.Distance(randomPosition, player.transform.position) < radius){
-                randomPosition = new Vector3(Random.Range(-25f, 25f), Random.Range(-25f, 25f), 0);
+                randomPosition = new Vector3(Random.Range(-24f, 24f), Random.Range(-24f, 24f), 0);
             }
 
             return randomPosition;
@@ -287,6 +316,6 @@ public enum GameState
 {
     PLAYING,
     PAUSED,
-    UPGRADE,
+    EVOLVE,
     END
 }

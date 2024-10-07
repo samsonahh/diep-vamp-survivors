@@ -1,24 +1,21 @@
-using DG.Tweening;
-using System.Collections;
-using System.Collections.Generic;
-using TMPro;
-using Unity.VisualScripting;
+﻿using DG.Tweening;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace FirstGameProg2Game
 {
-    public class EndPanelScript : MonoBehaviour
+    public class PausePanelScript : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private Button retryButton;
-        [SerializeField] private TMP_Text scoreText;
+        [SerializeField] private Button restartButton;
+        [SerializeField] private Button resumeButton;
         [SerializeField] private Image backgroundImage;
 
         private Image panelImage;
         private Color initialPanelColor;
         private Vector3 initialBackgroundScale;
+
         private void Awake()
         {
             panelImage = GetComponent<Image>();
@@ -36,7 +33,8 @@ namespace FirstGameProg2Game
 
         private void Start()
         {
-            retryButton.onClick.AddListener(Retry);
+            restartButton.onClick.AddListener(Restart);
+            resumeButton.onClick.AddListener(Close);
 
             GameManager.Instance.OnGameStateChanged.AddListener(GameManager_OnGameStateChanged);
 
@@ -45,17 +43,27 @@ namespace FirstGameProg2Game
 
         private void GameManager_OnGameStateChanged(GameState newState)
         {
-            if(newState == GameState.END)
+            if (newState == GameState.PAUSED)
             {
-                gameObject.SetActive(newState == GameState.END);
-                scoreText.text = $"You died!\nScore: {GameManager.Instance.Score}";
+                gameObject.SetActive(newState == GameState.PAUSED);
                 Open();
+            }
+
+            if (newState == GameState.PLAYING)
+            {
+                Close();
             }
         }
 
-        private void Retry()
+        private void Restart()
         {
             SceneManager.LoadScene("Main");
+        }
+
+        private void Resume()
+        {
+            GameManager.Instance.ChangeState(GameState.PLAYING);
+            gameObject.SetActive(false);
         }
 
         private void Open()
@@ -66,7 +74,21 @@ namespace FirstGameProg2Game
             panelImage.DOColor(initialPanelColor, 1f).SetEase(Ease.OutQuint).SetUpdate(true);
             backgroundImage.transform.DOScale(initialBackgroundScale, 1f).SetEase(Ease.OutQuint).SetUpdate(true);
 
-            retryButton.interactable = true;
+            restartButton.interactable = true;
+            resumeButton.interactable = true;
+        }
+
+        private void Close()
+        {
+            DOTween.Kill(panelImage);
+            DOTween.Kill(backgroundImage.transform);
+
+            panelImage.DOColor(Color.clear, 1f).SetEase(Ease.OutQuint).OnComplete(Resume).SetUpdate(true);
+            backgroundImage.transform.DOScale(Vector3.zero, 0.75f).SetEase(Ease.InQuint).SetUpdate(true);
+
+            restartButton.interactable = false;
+            resumeButton.interactable = false;
         }
     }
 }
+

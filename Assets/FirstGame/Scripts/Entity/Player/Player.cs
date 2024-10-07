@@ -11,6 +11,7 @@ namespace FirstGameProg2Game
         [Header("Player: References")]
         [SerializeField] private GameObject originalBarrelGameObject;
         [SerializeField] private GameObject dualBarrelGameObject;
+        [SerializeField] private GameObject spikesGameObject;
         [SerializeField] private Transform originalBulletSpawnTransform;
         [SerializeField] private Transform dualBulletSpawnTransform1;
         [SerializeField] private Transform dualBulletSpawnTransform2;
@@ -28,7 +29,7 @@ namespace FirstGameProg2Game
         [SerializeField] private int baseEXP = 10;
 
         [Header("Player: Stats Settings")]
-        [SerializeField] private int dualBarrelUnlockLevel = 15;
+        [SerializeField] private int evolveLevel = 15;
         [SerializeField] private int healthRegen = 1;
         [SerializeField] private float healthRegenRate = 1;
         [SerializeField] private float healthRegenPauseDurationAfterHit = 2f;
@@ -42,6 +43,8 @@ namespace FirstGameProg2Game
         private bool canRegen = true;
         [SerializeField] private protected float iFrameDuration = 0.5f;
         private float iFrameTimer = Mathf.Infinity;
+        private bool isEvolved = false;
+        private bool bulletPiercing;
 
         [Header("Player: Upgrades UI")]
         [SerializeField] private Slider healthRegenSlider;
@@ -67,7 +70,7 @@ namespace FirstGameProg2Game
         [Header("Player: Upgrade Add/Mult Amounts")]
         [SerializeField] private int healthRegenAddAmount = 1;
         [SerializeField] private int maxHealthAddAmount = 50;
-        [SerializeField] private int bodyDamageAddAmount = 10;
+        [SerializeField] private float bodyDamageMultiplyAmount = 1.5f;
         [SerializeField] private float bulletSpeedAddAmount = 5f;
         [SerializeField] private float bulletDamageMultiplyAmount = 1.26f;
         [SerializeField] private float reloadSpeedMultiplyAmount = 0.85f;
@@ -107,6 +110,8 @@ namespace FirstGameProg2Game
 
             HandleLevel();
             HandleUpgradesUI();
+
+            HandleSpikeRotation();
         }
 
         public override void Die(Entity s)
@@ -192,9 +197,14 @@ namespace FirstGameProg2Game
             float targetSliderValue = currentEXP / (float)maxEXP;
 
             levelText.text = $"Lvl {currentLevel}";
+            if(currentLevel >= maxLevel) levelText.text = $"Lvl {currentLevel} (MAX)";
             expSlider.value = Mathf.Lerp(expSlider.value, targetSliderValue, 10f * Time.unscaledDeltaTime);
 
-            if (currentLevel >= dualBarrelUnlockLevel && !dualBarrelGameObject.activeSelf) SwitchToDualBarrel();
+            if (currentLevel >= evolveLevel && !isEvolved)
+            {
+                GameManager.Instance.ChangeState(GameState.EVOLVE);
+                isEvolved = true;
+            }
         }
 
         public void LevelUp()
@@ -243,6 +253,7 @@ namespace FirstGameProg2Game
 
         public void HandleMouseClickInput()
         {
+            if (spikesGameObject.activeSelf) return;
             if (reloadTimer < reloadSpeed) return;
 
             if (Input.GetKey(KeyCode.Mouse0))
@@ -278,6 +289,8 @@ namespace FirstGameProg2Game
 
         public void HandleRotation()
         {
+            if (spikesGameObject.activeSelf) return;
+
             LookAt(mouseWorldPosition);
         }
 
@@ -300,7 +313,7 @@ namespace FirstGameProg2Game
             int randomDamage = CalculateRandomDamage(bulletDamage);
 
             BulletScript bullet = Instantiate(bulletPrefab, spawnTransform.position, Quaternion.identity);
-            bullet.Shoot(dir, bulletSpeed, randomDamage, team, this);
+            bullet.Shoot(dir, bulletSpeed, randomDamage, bulletPiercing, team, this);
 
             StartCoroutine(ShootCoroutine());
         }
@@ -338,15 +351,15 @@ namespace FirstGameProg2Game
 
         private void CheckEntityCollision(Collision2D collision)
         {
-            if (collision.gameObject.TryGetComponent(out Enemy enemy))
+            if (collision.gameObject.TryGetComponent(out Entity entity))
             {
-                if (enemy.Team == team) return;
-                if (!enemy.CanTakeBodyDamage()) return;
+                if (entity.Team == team) return;
+                if (!entity.CanTakeBodyDamage()) return;
 
                 int randomDamage = CalculateRandomDamage(bodyDamage);
 
-                enemy.TakeDamage(randomDamage, this);
-                enemy.ResetBodyDamageTimer();
+                entity.TakeDamage(randomDamage, this);
+                entity.ResetBodyDamageTimer();
 
                 CameraController.Instance.ShakeCamera(1.5f, 0.2f);
             }
@@ -407,7 +420,7 @@ namespace FirstGameProg2Game
             if (bodyDamageUpgrades >= maxUpgrades) return;
 
             bodyDamageUpgrades++;
-            bodyDamage += bodyDamageAddAmount;
+            bodyDamage = (int)Mathf.Ceil(bodyDamage * bodyDamageMultiplyAmount); ;
             availableUpgrades--;
         }
 
@@ -454,9 +467,34 @@ namespace FirstGameProg2Game
         public void SwitchToDualBarrel()
         {
             originalBarrelGameObject.SetActive(false);
+            spikesGameObject.SetActive(false);
+
             dualBarrelGameObject.SetActive(true);
 
             reloadSpeed = reloadSpeed / 2f;
+            bulletSpeed += 2.5f;
+            bulletPiercing = true;
+        }
+
+        public void SwitchToSpikes()
+        {
+            originalBarrelGameObject.SetActive(false);
+            dualBarrelGameObject.SetActive(false);
+
+            spikesGameObject.SetActive(true);
+
+            reloadSpeed = Mathf.Infinity;
+            bodyDamage *= 2;
+            moveSpeed *= movementSpeedMultiplyAmount;
+            healthRegenPauseDurationAfterHit = 0.5f;
+            healthRegen += 5;
+        }
+
+        private void HandleSpikeRotation()
+        {
+            if (!spikesGameObject.activeSelf) return;
+
+            spikesGameObject.transform.Rotate(500f * Time.deltaTime * new Vector3(0, 0, 1));
         }
     }
 }

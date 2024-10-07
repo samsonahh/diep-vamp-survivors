@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -8,9 +9,6 @@ namespace FirstGameProg2Game
     {
         [Header("Enemy: Settings")]
         [SerializeField] private int deathEXPDrop = 5;
-
-        private float bodyDamageTimer;
-        private float bodyDamageInterval = 0.5f;
 
         protected float difficulty => GameManager.Instance.Difficulty;
 
@@ -73,27 +71,12 @@ namespace FirstGameProg2Game
             currentTarget = target;
         }
 
-        private void HandleIncomingBodyDamage()
-        {
-            if (bodyDamageTimer < 2f * bodyDamageInterval) bodyDamageTimer += Time.deltaTime;
-        }
-
-        public bool CanTakeBodyDamage()
-        {
-            return bodyDamageTimer > bodyDamageInterval;
-        }
-
-        public void ResetBodyDamageTimer()
-        {
-            bodyDamageTimer = 0;
-        }
-
         public virtual void AdjustToDifficulty()
         {
             moveSpeed += (difficulty - 1) / 3f;
             MaxHealth = (int)Mathf.Ceil(MaxHealth * difficulty);
             CurrentHealth = MaxHealth;
-            deathEXPDrop = (int)Mathf.Ceil(deathEXPDrop * difficulty);
+            deathEXPDrop = (int)Mathf.Ceil(deathEXPDrop * 1.1f * difficulty);
         }
     }
 }

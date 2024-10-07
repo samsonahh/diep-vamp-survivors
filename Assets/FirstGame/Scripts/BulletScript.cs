@@ -12,32 +12,50 @@ namespace FirstGameProg2Game
         [SerializeField] private float selfDestroyDuration = 10f;
         private int damage;
         private int team;
+        private bool piercing;
         public int Team => team;
         private bool canHit = true;
 
         private Entity source;
+
+        private Vector3 startScale;
+        private bool deathCoroutineStarted;
+
+        private List<Entity> hitEnitities = new List<Entity>();
 
         private void Awake()
         {
             rigidBody = GetComponent<Rigidbody2D>();
         }
 
-        public void Shoot(Vector2 dir, float shootStrength, int damage, int team, Entity source)
+        private void Start()
+        {
+            startScale = transform.localScale;
+        }
+
+        private void Update()
+        {
+
+        }
+
+        public void Shoot(Vector2 dir, float shootStrength, int damage, bool piercing, int team, Entity source)
         {
             this.damage = damage;
             this.team = team;
             this.source = source;
+            this.piercing = piercing;
 
             rigidBody.AddForce(shootStrength * dir, ForceMode2D.Impulse);
 
             Destroy(gameObject, selfDestroyDuration);
         }
 
-        public void HomingShoot(Entity target, float bulletSpeed, int damage, int team, Entity source)
+        public void HomingShoot(Entity target, float bulletSpeed, int damage, bool piercing, int team, Entity source)
         {
             this.damage = damage;
             this.team = team;
             this.source = source;
+            this.piercing = piercing;
 
             StartCoroutine(HomingShootCoroutine(target, bulletSpeed));
         }
@@ -85,12 +103,14 @@ namespace FirstGameProg2Game
             {
                 if (!canHit) return;
                 if (entity.Team == team) return;
+                if(hitEnitities.Contains(entity)) return;
 
-                canHit = false;
+                if(!piercing) canHit = false;
 
                 entity.TakeDamage(damage, source);
+                hitEnitities.Add(entity);
 
-                Destroy(gameObject);
+                if (!piercing) Die();
             }
         }
 
@@ -103,8 +123,8 @@ namespace FirstGameProg2Game
 
                 canHit = false;
 
-                Destroy(bullet.gameObject);
-                Destroy(gameObject);
+                bullet.Die();
+                Die();
             }
         }
 
@@ -112,8 +132,42 @@ namespace FirstGameProg2Game
         {
             if (collision.gameObject.tag == "Wall")
             {
-                Destroy(gameObject);
+                Die();
             }
+        }
+
+        public void Die()
+        {
+            if (!deathCoroutineStarted) StartCoroutine(DeathFadeCoroutine());
+        }
+
+        private void OnDeath()
+        {
+
+        }
+
+        private IEnumerator DeathFadeCoroutine()
+        {
+            deathCoroutineStarted = true;
+
+            rigidBody.constraints = RigidbodyConstraints2D.FreezeAll;
+
+            enabled = false;
+
+            float duration = 0.15f;
+
+            for (float t = 0; t < duration; t += Time.deltaTime)
+            {
+                float parameter = EasingFunctions.OutCubic(t / duration);
+                transform.localScale = Vector3.Lerp(startScale, Vector3.zero, parameter);
+                yield return null;
+            }
+
+            transform.localScale = Vector3.zero;
+
+            OnDeath();
+
+            Destroy(gameObject);
         }
     }
 

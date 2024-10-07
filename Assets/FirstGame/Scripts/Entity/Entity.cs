@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +23,9 @@ namespace FirstGameProg2Game
         private protected Color startingBodyColor;
         private protected bool takeDamageCoroutineStarted;
         private protected Vector3 startingScale;
+
+        private protected float bodyDamageTimer;
+        private protected float bodyDamageInterval = 0.5f;
 
         private protected bool deathCoroutineStarted;
 
@@ -58,6 +62,8 @@ namespace FirstGameProg2Game
             startingScale = bodySpriteRenderer.transform.parent.localScale;
 
             hpSliderCanvasStartPos = hpSlider.transform.parent.localPosition;
+
+            bodySpriteRenderer.transform.parent.DOScale(0f, 0.5f).From().SetEase(Ease.OutQuint);
         }
 
         private void Update()
@@ -110,7 +116,7 @@ namespace FirstGameProg2Game
         {
             if(!deathCoroutineStarted) StartCoroutine(DeathFadeCoroutine());
 
-            Destroy(hpSlider.transform.parent.gameObject);
+            if(hpSlider != null) Destroy(hpSlider.transform.parent.gameObject);
         }
 
         protected virtual void OnDeath()
@@ -291,6 +297,21 @@ namespace FirstGameProg2Game
         private protected int CalculateRandomDamage(int baseDamage)
         {
             return baseDamage + (int)Mathf.Ceil(baseDamage * Random.Range(-0.25f, 0.5f));
+        }
+
+        private protected void HandleIncomingBodyDamage()
+        {
+            if (bodyDamageTimer < 2f * bodyDamageInterval) bodyDamageTimer += Time.deltaTime;
+        }
+
+        public bool CanTakeBodyDamage()
+        {
+            return bodyDamageTimer > bodyDamageInterval;
+        }
+
+        public void ResetBodyDamageTimer()
+        {
+            bodyDamageTimer = 0;
         }
     }
 }

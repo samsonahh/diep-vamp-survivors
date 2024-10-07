@@ -87,8 +87,8 @@ MonoBehaviour:
   rotationSpeed: 20
   CurrentHealth: 0
   MaxHealth: 250
-  iFrameDuration: 0.5
   deathEXPDrop: 50
+  contactDamage: 50
 --- !u!50 &5988209504732732488
 Rigidbody2D:
   serializedVersion: 4
@@ -103,7 +103,7 @@ Rigidbody2D:
   m_UseAutoMass: 0
   m_Mass: 1
   m_LinearDrag: 0
-  m_AngularDrag: 0.05
+  m_AngularDrag: 0.02
   m_GravityScale: 0
   m_Material: {fileID: 0}
   m_Interpolate: 0
@@ -231,6 +231,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 5988209504732732494}
     m_Modifications:
+    - target: {fileID: 4900355391247926591, guid: 87fd89db8a7f511418220572fdb7f4eb, type: 3}
+      propertyPath: m_Value
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5500164883680932691, guid: 87fd89db8a7f511418220572fdb7f4eb, type: 3}
       propertyPath: m_Name
       value: HPCanvas
