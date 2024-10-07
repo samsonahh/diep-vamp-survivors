@@ -5365,13 +5365,13 @@ MonoBehaviour:
     Value: 2
   maxEnemies: 50
   enemySpawnSkewConstant: 1.5
-  graceDuration: 30
-  initialEnemySpawnIntervalRange: {x: 1, y: 5}
+  graceDuration: 45
+  initialEnemySpawnIntervalRange: {x: 2.5, y: 5}
   <Score>k__BackingField: 0
   <Difficulty>k__BackingField: 0
   baseDifficulty: 1
-  maxDifficulty: 5
-  timeTillMaxDifficulty: 150
+  maxDifficulty: 4
+  timeTillMaxDifficulty: 135
   gameTimer: 0
   OnGameStateChanged:
     m_PersistentCalls:
@@ -7238,7 +7238,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4003940542282801943, guid: b90e2b35e714d5c44b63946c7a072e75, type: 3}
       propertyPath: baseEXP
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4003940542282801943, guid: b90e2b35e714d5c44b63946c7a072e75, type: 3}
       propertyPath: expSlider
@@ -7278,7 +7278,7 @@ PrefabInstance:
       objectReference: {fileID: 268325387}
     - target: {fileID: 4003940542282801943, guid: b90e2b35e714d5c44b63946c7a072e75, type: 3}
       propertyPath: levelUpAcceleration
-      value: 1.05
+      value: 1.04
       objectReference: {fileID: 0}
     - target: {fileID: 4003940542282801943, guid: b90e2b35e714d5c44b63946c7a072e75, type: 3}
       propertyPath: levelUpLinearGrowth
